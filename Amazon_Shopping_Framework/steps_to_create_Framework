@@ -1,0 +1,225 @@
+BEFORE WE BUILD A PAGE OBJECT WE NEED TO DESIGN THE FIRST FRAMEWOEK =====watch video 85
+By now, u should have created ur first raw selenium automation script
+
+#1
+create a new python project
+
+#2
+create a python package and call it 'tests'
+inside this package, create a python file with name 'test_e2e'   NB. You can name it anything but ensure to start with test_
+since its a pytest framework we are building
+
+#3
+create a class called say "TestOne"
+create a method/function inside that class and call it 'test_e2e'     NB. You can name it anything but ensure to start with test_
+since its a pytest framework we are building
+
+#4
+copy all the contents of your first raw selenium automation script and paste it inside the function/method u created in #3
+now move all the import bla bla bla outside this function , place them above/ontop of the class created in #3
+now check whether you have import pytest there, if not import it
+
+you can just randomly run the page u are on i.e test_e2e.py page to see whether it runs. stop it along the way
+we are doing this to verify whether the browser is invoking or not
+
+we go ahead to optimize the code and make it better
+
+#5
+note browser invokation code are the driver=webdriver.chrome(<path of the driver in ur local computer>)
+and then the driver.get bla bla bla  and stops just before u see the first driver.findelement bla bla bla
+The browser invokation code should not be inside this test_e2e.py file. it should be placed in a seperate file
+the best place to place it is in a 'fixture'      Remember fixtures?
+WE PLACE IT IN A FIXTURE SO THAT IT WILL BE EXECUTED before executing the main testcase
+
+step***
+after placing it in that fixture on a separate page, we then  we find a way of linking it to the test_e2e.py page
+the best place to put this browser invokation is the conftest.py file
+on the test_e2e.py page, we do :
+@pytest.mark.usefixtures(<name of the fxn from conftest.py>)                step***5
+
+
+
+#6
+inside the 'tests' folder, create a new python file  called conftest.py
+inside the conftest.py, create a function/method and name it 'setup' and then put the fixture as seen below
+note that we set the scope to class so that it will run once bf running the class in test_e2e.py page where we will link the fixtures to
+
+@pytest.fixture(scope = "class")
+def setup():
+    all the browser shit comes in here
+
+#7
+on the test_e2e.py file above the class that houses the 'your first raw selenium automation script', we now create a link between the conftest.py
+page fixture and the test_e2e.py page by doing step***5
+
+now carry some of  the import bla bla bla in test_e2e.py page to conftest.py that are needed in the conftest.py page
+and leave import relalating to explicit and implicit wait or expected conditions
+and other necessary ones on this test_e2e.py page which are actually needed on the test_e2e.py page
+
+
+#8
+Now we can see there are driver.bla bla bla in test_e2e.py page and driver.bla bla bla in conftest.py
+the one in conftest.py is working properly b/c 'from selenium import webdriver' is inside conftest.py
+the one in test_e2e.py page is not working well so we need to make it work
+we have to link the two drivers in both pages.
+
+we would have gone to the function setup in conftest.py page and make it have a return value called 'driver'
+in such a way that anytime we needed driver in test_e2e.py page we would be like setup.driver.f.......
+and inorder 4 this to work, we need to also pass 'setup' as an argument to def test_e2e(self)
+to have def test_e2e(self, setup)                   *&!
+
+this would not make sense since in the conftest.py we r tryna build a setup (browser starts) and tear down (browser close )process for our test
+and having a return value above the yield keyword is not okay
+
+remember the yield keyword, it tells the browser ....okay after starting to and run the testcases in another ppage then come bck
+and run whatever that is below u.
+
+there is a way to solve this. we add the parameter 'request' as an argument into the function setup in conftest.py page.
+then instead of writing 'return driver' , we use:
+
+request.cls.driver = driver            *\
+
+---------->where cls.driver is actually the driver that aint working located in test_e2e.py
+-------> we are now assigning our local class in the fixture located in conftest.py(WHICH IS ON THE RHS in line 79) to
+           the one in the fxn inside the class in test_e2e.py(on the LHS, we have cls.driver)
+----------> it means our driver will be sent as a class object (cls) to the test_e2e.py
+you can now add ur yield and driver.close() below.
+
+now  *\ is a class variable and to access it in the fxn test_e2e we use self.
+so anywhere u see driver inside fxn test_e2e in test_e2e.py, just add self.  infront of driver
+
+#9
+
+Inside this python prject (look at #1), create a python package called utilities and inside this package,
+create a python file called BaseClass.py
+inside BaseClass.py , create a class called BaseClass and also attach step***5 above it.
+this gives this class u created an info regarding the setup fxn on the conftest.py page.
+
+now go and comment that (step***5) on test_e2e.py page and use python parent-child inheritance property in python to make the
+child-class in test_e2e.py called TestOne inherit the  propertied of the parent-class called BaseClass in BaseClass.py
+u will have something like this:
+
+#@pytest.mark.usefixtures(<name of the fxn from conftest.py>)     remember this is commented or u can remove i
+class TestOne(BaseClass)
+
+so as the parent class has knowledge about this fixtures, once the child class inherits the properties of the parent class,
+it will automatically inherit this fixture property of the parent class
+
+-----> now remove that setup parameter added during  level *&! above
+
+our code is getting more optimized
+you see how our code is getting cleaner, so we wont see any shitty fixtures on our test_e2e.py file
+
+#10
+we want to be able to pick among 3 options of browsers and select the one we want to use to perform a test.
+we want to choose among chrome, IE and firefox
+up until now we have been using chrome. and as a tester, we should be able to test apps using different browsers
+
+To achieve this we proceed as follows: on conftest.py
+we need to first tell our pytest that we are going to declare command line arguments
+we do this inside the conftest.py file.
+
+You can go to pytest documentation and see how they pass command line arguments
+
+
+
+
+
+
+
+
+##################################________PAGE OBJECT DESIGN PATTERN______________#############################
+
+Inside the framework, First create a python package in pycharm called pageObjects
+create python files which will represent each web_page on the website you want to automate
+eg: homepage.py , loginpage.py, checkoutpage.py etc
+Go to the page(in the web browser) where the test starts and see the name of d page. u can give it a name eg: homepage
+
+#4
+++++++++stop and do the below action before u continue
+
+#5
+--------------> create a single python file where actions are done like .click, .sendkeys() etc. you can name the file test_e2e.py i.e test end to end
+
+++++++++ continue
+come to the first py file u created
+
+
+#6  create a class whose name is the name of the page
+----> all operations that are to be performed on that page should be stored in the class created
+----> so assuming we have 5 different pages(name of action performed as page_name) , it means we will have 5 different classes
+----> and under each class are operations performed on each page which means all the objects specific to that page will go to that class
+----> These objects are locators or locators bla bla bla
+----> this way we put the objects under a class in one page for easy readability and we "call" them from that class when we need them
+#7  create a constructor and remember to use the driver as a parameter here
+define an instance variable of the driver inside the constructor
+
+come outside the constructor and enter the class
+inside the class, create a class variable which is going to be a tuple
+the tuple has two items inside that looks like this for example (By.CSS_SELECTOR, "a[href*='shop']")
+
+create a function which is going to return the action performed.
+what it will return should be for eg. self.driver.find_element(*classname.classvaraible)....bla bla bla
+
+# the star means it should read it as a tuple and at the end realize the full command which is:
+self.driver.find_element(By.CSS_SELECTOR, "a[href*='shop']")
+        # what is returned here will be sent to the test page (test_e2e.py) for execution
+        # execution here means for example click()
+# it is self.driver.find... because we are calling the instance variable 'driver' in the 2nd line inside the constructor IN #7
+# recall self.firstnumber in the python basics class. the firstnumber is the name of the variable and on calling it we
+# used self.firstnumber
+
+
+go to the page containing all test Actions (eg. sendkeys, click(), etc ) that is the test_e2e.py and
+inside the function there
+create an object of the class(in #6) and use that object to perform all needed actions.
+example lets say the class name is homepage
+
+REMEMBER OUR CONSTRUCTOR WAS LIKE THIS: def __init__(self, driver)
+u will do Homepage = homepage(self.driver) ..it is taking driver as an argument because in #7 you created a constructor which takes in driver as a parameter
+from the above the object is on the LHS and its content is the classname(parameter from #7)
+it was meant to be Homepage = homepage(driver) --------------> i dunno why they added self.
+ I asked chat gpt explained everything in detail to it and it gave a clue, u can do the same
+ what i understood from chatgpt was that
+ we need to associate the driver in the two pages and we do that as follows
+
+ inside the function in test_e2e.py we do the following
+ # creating the driver object, which represents the driver u want to associate with the HomePage
+        driver = self.driver
+ # creating an instance of 'HomePage' by passing the 'driver' object as an argument to the constructor
+        home_page = HomePage(driver)
+now we can go ahead ND USE this object to call the methods in the class HomePage inside HomePage.py page
+and then after calling them u can add click() or sendkeys() depending on the action we want to perform
+
+follow these steps and do it for all other pages.
+----------------------------------------------------------------------------------------------------------------
+problem with this method is that: you have to create object of a class for each page since each page has a class ...
+so assuming we have 10 pages in a website, it means you will need to create 10 pages with each page having a class
+and then an object for calling each class. this will make the work elongated.
+
+NOW OUR TARGET IS TO REMOVE 'OBJECT OF A CLASS CREATION' IN OUR TEST (ie inside the fxn under a class in test_e2e.py)
+now note we can ONLY create the object of the class of the first page inside the fxn under a class in test_e2e.py but subsequent
+pages object of the class, we will not
+
+first find the link between two connecting pages and use that to minimize the number of object created on the test_e2e.py page.
+
+find the integration point between two pages you are navigating b/w, for example, if i click a button on home page,
+it will open me the login page.
+lets say when u click button x on page1, it enters page 2
+now go to page 1
+go to the function that carries operation that will link to page2 and create the object of the class of page2 inside
+there and make that ur return value
+
+example is seen below: 'change_currency' is a fxn inside the class 'HomePage' and when clicked sends u to the page with class name 'setting'
+so as seen the return of the function below is the object of the class of the next page so whenever this function is called(inside your
+test ie called inside the fxn in test_e2e.py page), it gives u the object of the class of the nextpage(SettingsPage.py)
+note that in below, the previous return value which was self.driver.find_element(*HomePage.flag) is changed into
+self.driver.find_element(*HomePage.flag).click() so what actually happens is that
+the fxn change_currency performs an action which is to find the web element in the first page(HomePage.py) and then
+returns the object of the class of the nextpage which the clicked operation will land you in i.e SettingsPage.py
+so that whenever you call the fxn change_currency it will automatically give you the object for the nextpage
+
+ def change_currency(self):
+        self.driver.find_element(*HomePage.flag).click()
+        Settings = settings(self.driver)
+        return Settings
